@@ -8,15 +8,27 @@ import (
 )
 
 func Serve(c *cli.Context) error {
-	SetLogLevel()
+	SetLogLevel(LogLevel)
 	log.Infof("Starting NoErrorCode. Version %s", AppVersion)
 
-	return nil
+	config := new(Config)
+	if err := config.Read(ConfigFilepath); err != nil {
+		log.Errorf("Failed to read config: %s", err.Error())
+		return err
+	}
+
+	ws := new(WebSocket)
+	if err := ws.Init(config.WebSocket); err != nil {
+		log.Errorf("Failed to initialize WebSocket: %s", err.Error())
+		return err
+	}
+
+	return ws.Run()
 }
 
-func SetLogLevel() {
-	LogLevel = strings.ToLower(LogLevel)
-	switch LogLevel {
+func SetLogLevel(level string) {
+	level = strings.ToLower(level)
+	switch level {
 	case "trace":
 		log.SetLevel(log.TraceLevel)
 		return

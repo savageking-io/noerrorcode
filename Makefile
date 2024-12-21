@@ -37,7 +37,7 @@ distclean:
 
 tests:
 	go clean -testcache
-	go test ./...
+	go test -v ./...
 
 cover:
 	@go test -cover | grep coverage:
