@@ -4,6 +4,7 @@ NAME_BASE=noerrorcode
 SOURCES=main.go \
 		client.go \
 		service.go \
+		local_client.go \
 		config.go \
 		websocket.go \
 		vars.go

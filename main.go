@@ -46,6 +46,19 @@ func main() {
 			},
 			Action: Serve,
 		},
+		{
+			Name:  "client",
+			Usage: "Start a test client",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:        "host",
+					Usage:       "Target hostname and port in form of hostname:port/[addr/]",
+					Value:       "localhost:31312",
+					Destination: &TargetHostname,
+				},
+			},
+			Action: LocalClient,
+		},
 	}
 
 	app.Run(os.Args)

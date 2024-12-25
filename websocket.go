@@ -39,7 +39,7 @@ func (ws *WebSocket) Init(config *WebSocketConfig) error {
 
 func (ws *WebSocket) Run() error {
 	log.Traceln("WebSocket::Run")
-	log.Infof("Starting WebSocket server on %s:%d", ws.config.Hostname, ws.config.Port)
+	log.Infof("Starting WebSocket server on %s:%d%s", ws.config.Hostname, ws.config.Port, ws.config.URL)
 	http.HandleFunc(ws.config.URL, ws.Handle)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ws.config.Hostname, ws.config.Port), nil))
 	return nil
