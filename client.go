@@ -1,11 +1,14 @@
 package main
 
 import (
+	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/savageking-io/noerrorcode/schemas"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -41,24 +44,46 @@ func (c *Client) Run() {
 }
 
 func (c *Client) Handle(payload []byte) error {
-	data := new(MessageSchema)
-	err := json.Unmarshal(payload, data)
-	if err != nil {
-		log.Errorf("Client [%s]: Failed to parse: %s", c.uuid, err.Error())
-		return err
+	if len(payload) < 4 {
+		log.Warnf("Client [%s]: Payload is too small: %d bytes", payload, len(payload))
+		return nil
 	}
 
-	if data.Message == "hello" {
-		response := new(MessageSchema)
-		response.Message = "welcome"
-		out, err := json.Marshal(response)
+	ctrl := binary.BigEndian.Uint32(payload[:4])
+	switch ctrl {
+	case MsgTypeHello:
+		log.Debugf("Client [%s]: Received Hello", c.uuid)
+		return c.HandleHello(payload[4:])
+	}
+
+	/*
+		err := json.Unmarshal(payload, data)
 		if err != nil {
-			log.Errorf("Client [%s]: Failed to marshal: %s", c.uuid, err.Error())
+			log.Errorf("Client [%s]: Failed to parse: %s", c.uuid, err.Error())
 			return err
 		}
-		c.Send(out)
-	}
 
+		if data.Message == "hello" {
+			response := new(MessageSchema)
+			response.Message = "welcome"
+			out, err := json.Marshal(response)
+			if err != nil {
+				log.Errorf("Client [%s]: Failed to marshal: %s", c.uuid, err.Error())
+				return err
+			}
+			c.Send(out)
+		}
+	*/
+
+	return fmt.Errorf("client [%s]: bad packet %+v", c.uuid, payload)
+}
+
+func (c *Client) HandleHello(data []byte) error {
+	packet := new(schemas.HelloMessage)
+	err := json.Unmarshal(data, packet)
+	if err != nil {
+		return fmt.Errorf("unmarshal failed. Client: %s, Data: %+v", c.uuid, data)
+	}
 	return nil
 }
 

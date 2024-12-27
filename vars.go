@@ -10,3 +10,8 @@ var (
 	WebSocketWriteBufferSize int64  = 1024
 	WebSocketPingTimeout     int    = 30
 )
+
+const (
+	MsgTypeHello   uint32 = 0xBAB0
+	MsgTypeWelcome uint32 = 0xBAB1
+)
