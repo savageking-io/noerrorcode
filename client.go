@@ -87,14 +87,36 @@ func (c *Client) HandleHello(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("unmarshal failed. Client: %s, Data: %+v", c.uuid, data)
 	}
-	return nil
+
+	log.Debugf("Client [%s] is welcome. Revision: %d, OS: %s", c.uuid, packet.Revision, packet.OSVersion)
+
+	welcome := new(schemas.WelcomeMessage)
+	welcome.Revision = packet.Revision
+	welcome.Status = 0 // @TODO: May be different if status not operational
+	welcome.Version = AppVersion
+
+	payload, err := json.Marshal(welcome)
+	if err != nil {
+		return fmt.Errorf("marshal failed: %s", err.Error())
+	}
+
+	return c.Send(c.MakeMessage(MsgTypeWelcome, payload))
 }
 
 func (c *Client) Send(payload []byte) error {
+	if c.conn == nil {
+		return fmt.Errorf("nil connection")
+	}
 	return c.conn.WriteMessage(1, payload)
 }
 
 func (c *Client) PongHandler(in string) error {
 	c.conn.SetReadDeadline(time.Now().Add(time.Duration(WebSocketPingTimeout)))
 	return nil
+}
+
+func (c *Client) MakeMessage(msgType uint32, payload []byte) []byte {
+	var header = make([]byte, 4)
+	binary.BigEndian.PutUint32(header, msgType)
+	return append(header, payload...)
 }
