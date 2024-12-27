@@ -39,20 +39,20 @@ func (c *Client) Run() {
 			break
 		}
 		log.Debugf("Client: Read %d bytes: %s", n, string(msg))
-		c.Handle(msg)
+		if err := c.Handle(msg); err != nil {
+			log.Errorf("Client %s: %s", c.uuid, err.Error())
+		}
 	}
 }
 
 func (c *Client) Handle(payload []byte) error {
 	if len(payload) < 4 {
-		log.Warnf("Client [%s]: Payload is too small: %d bytes", payload, len(payload))
-		return nil
+		return fmt.Errorf("payload is too small: %d bytes", len(payload))
 	}
 
 	ctrl := binary.BigEndian.Uint32(payload[:4])
 	switch ctrl {
 	case MsgTypeHello:
-		log.Debugf("Client [%s]: Received Hello", c.uuid)
 		return c.HandleHello(payload[4:])
 	}
 
@@ -75,10 +75,12 @@ func (c *Client) Handle(payload []byte) error {
 		}
 	*/
 
-	return fmt.Errorf("client [%s]: bad packet %+v", c.uuid, payload)
+	return fmt.Errorf("bad packet %+v", payload)
 }
 
 func (c *Client) HandleHello(data []byte) error {
+	log.Traceln("Client::HandleHello")
+	log.Debugf("Client [%s]: Received Hello", c.uuid)
 	packet := new(schemas.HelloMessage)
 	err := json.Unmarshal(data, packet)
 	if err != nil {
