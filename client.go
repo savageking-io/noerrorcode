@@ -10,7 +10,7 @@ import (
 )
 
 type MessageSchema struct {
-	Message string `json:"msg"`
+	Message string `json:"message"`
 }
 
 type Client struct {
