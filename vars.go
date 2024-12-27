@@ -12,6 +12,6 @@ var (
 )
 
 const (
-	MsgTypeHello   uint32 = 0xBAB0
-	MsgTypeWelcome uint32 = 0xBAB1
+	MsgTypeHello   uint32 = 0xFEF0BAB0
+	MsgTypeWelcome uint32 = 0xFEF0BAB1
 )

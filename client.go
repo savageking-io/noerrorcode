@@ -50,6 +50,7 @@ func (c *Client) Handle(payload []byte) error {
 		return fmt.Errorf("payload is too small: %d bytes", len(payload))
 	}
 
+	//ctrl := binary.BigEndian.Uint32(payload[:4])
 	ctrl := binary.BigEndian.Uint32(payload[:4])
 	switch ctrl {
 	case MsgTypeHello:
@@ -75,7 +76,7 @@ func (c *Client) Handle(payload []byte) error {
 		}
 	*/
 
-	return fmt.Errorf("bad packet %+v", payload)
+	return fmt.Errorf("bad packet %+v [%x]", payload, payload[:4])
 }
 
 func (c *Client) HandleHello(data []byte) error {
