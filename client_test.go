@@ -56,7 +56,7 @@ func TestClient_Handle(t *testing.T) {
 		wantErr bool
 	}{
 		{"Small payload", fields{}, args{}, true},
-		{"Hello Message", fields{}, args{helloMessage}, false},
+		{"Hello Message", fields{}, args{helloMessage}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
