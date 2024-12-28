@@ -11,3 +11,12 @@ type WelcomeMessage struct {
 	Version  string `json:"version"`
 	Status   uint16 `json:"status"`
 }
+
+type AuthRequest struct {
+	Ticket string `json:"ticket"`
+}
+
+type AuthResponse struct {
+	Status uint16 `json:"status"`
+	Token  string `json:"token"`
+}

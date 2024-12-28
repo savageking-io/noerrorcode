@@ -14,4 +14,14 @@ var (
 const (
 	MsgTypeHello   uint32 = 0xFEF0BAB0
 	MsgTypeWelcome uint32 = 0xFEF0BAB1
+	MsgTypeAuth    uint32 = 0xFEF0FEFA
+)
+
+// Auth Status Codes 100XX
+const (
+	StatusCodeAuthSuccess         uint16 = 0     // Authentication succeed
+	StatusCodeAuthInternalError   uint16 = 10001 // Internal server error (e.g. failed to unmarshal)
+	StatusCodeAuthExternalError   uint16 = 10002 // External server error (platform-side)
+	StatusCodeAuthAuthFailed      uint16 = 10003 // Authentication failed
+	StatusCodeGenerateTokenFailed uint16 = 10004
 )
