@@ -100,35 +100,6 @@ func TestClient_HandleHello(t *testing.T) {
 	}
 }
 
-func TestClient_Send(t *testing.T) {
-	type fields struct {
-		conn *websocket.Conn
-		uuid uuid.UUID
-	}
-	type args struct {
-		payload []byte
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &Client{
-				conn: tt.fields.conn,
-				uuid: tt.fields.uuid,
-			}
-			if err := c.Send(tt.args.payload); (err != nil) != tt.wantErr {
-				t.Errorf("Client.Send() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func TestClient_PongHandler(t *testing.T) {
 	type fields struct {
 		conn *websocket.Conn

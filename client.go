@@ -81,12 +81,7 @@ func (c *Client) HandleHello(data []byte) error {
 	welcome.Status = 0 // @TODO: May be different if status not operational
 	welcome.Version = AppVersion
 
-	payload, err := json.Marshal(welcome)
-	if err != nil {
-		return fmt.Errorf("marshal failed: %s", err.Error())
-	}
-
-	return c.Send(c.MakeMessage(MsgTypeWelcome, payload))
+	return c.Send(MsgTypeWelcome, welcome)
 }
 
 func (c *Client) HandleAuth(payload []byte) error {
@@ -97,7 +92,7 @@ func (c *Client) HandleAuth(payload []byte) error {
 
 	if nec.Steam == nil {
 		response.Status = StatusCodeAuthInternalError
-		c.Send(response)
+		c.Send(MsgTypeAuthResponse, response)
 		return fmt.Errorf("nil steam")
 	}
 
@@ -105,7 +100,7 @@ func (c *Client) HandleAuth(payload []byte) error {
 	err := json.Unmarshal(payload, packet)
 	if err != nil {
 		response.Status = StatusCodeAuthInternalError
-		c.Send(response)
+		c.Send(MsgTypeAuthResponse, response)
 		return fmt.Errorf("unmarshal failed. Client: %s, Data: %+v", c.uuid, payload)
 	}
 
@@ -114,13 +109,13 @@ func (c *Client) HandleAuth(payload []byte) error {
 	steamResponse, err := nec.Steam.AuthUserTicket([]byte(packet.Ticket))
 	if err != nil {
 		response.Status = StatusCodeAuthExternalError
-		c.Send(response)
+		c.Send(MsgTypeAuthResponse, response)
 		return fmt.Errorf("auth failed: %s", err.Error())
 	}
 
 	if steamResponse.Response.Params.Result != "OK" {
 		response.Status = StatusCodeAuthAuthFailed
-		c.Send(response)
+		c.Send(MsgTypeAuthResponse, response)
 		return fmt.Errorf("auth failed: %s", steamResponse.Response.Params.Result)
 	}
 
@@ -128,22 +123,22 @@ func (c *Client) HandleAuth(payload []byte) error {
 	c.PlatformUserID = steamResponse.Response.Params.SteamID
 	if err := c.GenerateToken(); err != nil {
 		response.Status = StatusCodeGenerateTokenFailed
-		c.Send(response)
+		c.Send(MsgTypeAuthResponse, response)
 		return fmt.Errorf("token failed: %s", err.Error())
 	}
 
 	response.Status = 0
 	response.Token = c.token
-	return c.Send(response)
+	return c.Send(MsgTypeAuthResponse, response)
 }
 
-func (c *Client) Send(v any) error {
+func (c *Client) Send(msgType uint32, v any) error {
 	data, err := json.Marshal(v)
 	if err != nil {
 		log.Debugf("Failed to marshal: %+v", v)
 		return fmt.Errorf("marshal failed: %s", err.Error())
 	}
-	return c.SendRaw(data)
+	return c.SendRaw(c.MakeMessage(msgType, data))
 }
 
 func (c *Client) SendRaw(payload []byte) error {

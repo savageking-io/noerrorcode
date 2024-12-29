@@ -12,9 +12,10 @@ var (
 )
 
 const (
-	MsgTypeHello   uint32 = 0xFEF0BAB0
-	MsgTypeWelcome uint32 = 0xFEF0BAB1
-	MsgTypeAuth    uint32 = 0xFEF0FEFA
+	MsgTypeHello        uint32 = 0xFEF0BAB0
+	MsgTypeWelcome      uint32 = 0xFEF0BAB1
+	MsgTypeAuth         uint32 = 0xFEF0FEFA
+	MsgTypeAuthResponse uint32 = 0xFEF0FEFB
 )
 
 // Auth Status Codes 100XX
