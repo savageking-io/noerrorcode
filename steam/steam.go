@@ -2,7 +2,6 @@ package steam
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -48,7 +47,8 @@ func (d *Steam) Init(config *Config) error {
 func (d *Steam) AuthUserTicket(authTicket []byte) (*AuthTicketResponse, error) {
 	log.Traceln("Steam::AuthUserTicket")
 
-	ticket := hex.EncodeToString(authTicket)
+	//ticket := hex.EncodeToString(authTicket)
+	ticket := string(authTicket)
 
 	data := &UserTicketAuthRequest{
 		Key:      d.config.Key,
@@ -58,7 +58,7 @@ func (d *Steam) AuthUserTicket(authTicket []byte) (*AuthTicketResponse, error) {
 	}
 
 	payload := fmt.Sprintf("key=%s&appid=%d&ticket=%s&identity=%s", data.Key, data.AppId, data.Ticket, data.Identity)
-	log.Debugf("Steam::AuthUserTicket. Request: %s", payload)
+	log.Debugf("Steam::AuthUserTicket. Request payload: %s", payload)
 	url := fmt.Sprintf("%s%s?%s", api_backend, "/ISteamUserAuth/AuthenticateUserTicket/v1/", payload)
 
 	req, err := http.NewRequest("GET", url, bytes.NewBuffer([]byte(payload)))
