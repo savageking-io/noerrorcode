@@ -37,6 +37,9 @@ func (d *Steam) Init(config *Config) error {
 	if config.Key == "" {
 		return fmt.Errorf("bad key")
 	}
+	log.Debugf("Steam App ID: %d", config.AppId)
+	log.Debugf("Steam Publisher ID: %s", config.PublisherId)
+	log.Debugf("Steam Key: %s", config.Key)
 	d.config = config
 	return nil
 }

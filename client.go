@@ -114,6 +114,12 @@ func (c *Client) HandleAuth(messageId uint32, payload []byte) error {
 		return fmt.Errorf("auth failed: %s", err.Error())
 	}
 
+	if steamResponse == nil || steamResponse.Response == nil || steamResponse.Response.Params == nil {
+		response.Status = StatusCodeAuthInternalError
+		c.Send(MsgTypeAuthResponse, messageId, response)
+		return fmt.Errorf("auth failed internally: nil data")
+	}
+
 	if steamResponse.Response.Params.Result != "OK" {
 		response.Status = StatusCodeAuthAuthFailed
 		c.Send(MsgTypeAuthResponse, messageId, response)
