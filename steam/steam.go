@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -53,10 +54,11 @@ func (d *Steam) AuthUserTicket(authTicket []byte) (*AuthTicketResponse, error) {
 		Key:      d.config.Key,
 		AppId:    uint32(d.config.AppId),
 		Ticket:   ticket,
-		Identity: d.config.PublisherId,
+		Identity: url.QueryEscape(fmt.Sprintf("WebAPI:%s", d.config.PublisherId)),
 	}
 
 	payload := fmt.Sprintf("key=%s&appid=%d&ticket=%s&identity=%s", data.Key, data.AppId, data.Ticket, data.Identity)
+	log.Debugf("Steam::AuthUserTicket. Request: %s", payload)
 	url := fmt.Sprintf("%s%s?%s", api_backend, "/ISteamUserAuth/AuthenticateUserTicket/v1/", payload)
 
 	req, err := http.NewRequest("GET", url, bytes.NewBuffer([]byte(payload)))
