@@ -53,7 +53,7 @@ func (d *Steam) AuthUserTicket(authTicket []byte) (*AuthTicketResponse, error) {
 		Key:      d.config.Key,
 		AppId:    uint32(d.config.AppId),
 		Ticket:   ticket,
-		Identity: fmt.Sprintf("WebAPI:%s", d.config.PublisherId),
+		Identity: d.config.PublisherId,
 	}
 
 	payload := fmt.Sprintf("key=%s&appid=%d&ticket=%s&identity=%s", data.Key, data.AppId, data.Ticket, data.Identity)
