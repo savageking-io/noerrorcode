@@ -34,8 +34,8 @@ func Serve(c *cli.Context) error {
 		return err
 	}
 
-	steam := new(steam.Steam)
-	if err := steam.Init(nec.Config.Steam); err != nil {
+	nec.Steam = new(steam.Steam)
+	if err := nec.Steam.Init(nec.Config.Steam); err != nil {
 		log.Errorf("Steam Init failed: %s", err.Error())
 		return err
 	}
