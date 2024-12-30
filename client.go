@@ -55,17 +55,18 @@ func (c *Client) Handle(payload []byte) error {
 	}
 
 	ctrl := binary.BigEndian.Uint32(payload[:4])
+	messageId := binary.BigEndian.Uint32(payload[4:8])
 	switch ctrl {
 	case MsgTypeHello:
-		return c.HandleHello(payload[4:])
+		return c.HandleHello(messageId, payload[8:])
 	case MsgTypeAuth:
-		return c.HandleAuth(payload[4:])
+		return c.HandleAuth(messageId, payload[8:])
 	}
 
 	return fmt.Errorf("bad packet %+v [%x]", payload, payload[:4])
 }
 
-func (c *Client) HandleHello(data []byte) error {
+func (c *Client) HandleHello(messageId uint32, data []byte) error {
 	log.Traceln("Client::HandleHello")
 	log.Debugf("Client [%s]: Received Hello", c.uuid)
 	packet := new(schemas.HelloMessage)
@@ -81,10 +82,10 @@ func (c *Client) HandleHello(data []byte) error {
 	welcome.Status = 0 // @TODO: May be different if status not operational
 	welcome.Version = AppVersion
 
-	return c.Send(MsgTypeWelcome, welcome)
+	return c.Send(MsgTypeWelcome, messageId, welcome)
 }
 
-func (c *Client) HandleAuth(payload []byte) error {
+func (c *Client) HandleAuth(messageId uint32, payload []byte) error {
 	log.Traceln("Client::HandleAuth")
 	log.Debugf("Client [%s]: Requested auth", c.uuid)
 
@@ -92,7 +93,7 @@ func (c *Client) HandleAuth(payload []byte) error {
 
 	if nec.Steam == nil {
 		response.Status = StatusCodeAuthInternalError
-		c.Send(MsgTypeAuthResponse, response)
+		c.Send(MsgTypeAuthResponse, messageId, response)
 		return fmt.Errorf("nil steam")
 	}
 
@@ -100,7 +101,7 @@ func (c *Client) HandleAuth(payload []byte) error {
 	err := json.Unmarshal(payload, packet)
 	if err != nil {
 		response.Status = StatusCodeAuthInternalError
-		c.Send(MsgTypeAuthResponse, response)
+		c.Send(MsgTypeAuthResponse, messageId, response)
 		return fmt.Errorf("unmarshal failed. Client: %s, Data: %+v", c.uuid, payload)
 	}
 
@@ -109,13 +110,13 @@ func (c *Client) HandleAuth(payload []byte) error {
 	steamResponse, err := nec.Steam.AuthUserTicket([]byte(packet.Ticket))
 	if err != nil {
 		response.Status = StatusCodeAuthExternalError
-		c.Send(MsgTypeAuthResponse, response)
+		c.Send(MsgTypeAuthResponse, messageId, response)
 		return fmt.Errorf("auth failed: %s", err.Error())
 	}
 
 	if steamResponse.Response.Params.Result != "OK" {
 		response.Status = StatusCodeAuthAuthFailed
-		c.Send(MsgTypeAuthResponse, response)
+		c.Send(MsgTypeAuthResponse, messageId, response)
 		return fmt.Errorf("auth failed: %s", steamResponse.Response.Params.Result)
 	}
 
@@ -123,22 +124,22 @@ func (c *Client) HandleAuth(payload []byte) error {
 	c.PlatformUserID = steamResponse.Response.Params.SteamID
 	if err := c.GenerateToken(); err != nil {
 		response.Status = StatusCodeGenerateTokenFailed
-		c.Send(MsgTypeAuthResponse, response)
+		c.Send(MsgTypeAuthResponse, messageId, response)
 		return fmt.Errorf("token failed: %s", err.Error())
 	}
 
 	response.Status = 0
 	response.Token = c.token
-	return c.Send(MsgTypeAuthResponse, response)
+	return c.Send(MsgTypeAuthResponse, messageId, response)
 }
 
-func (c *Client) Send(msgType uint32, v any) error {
+func (c *Client) Send(msgType uint32, messageId uint32, v any) error {
 	data, err := json.Marshal(v)
 	if err != nil {
 		log.Debugf("Failed to marshal: %+v", v)
 		return fmt.Errorf("marshal failed: %s", err.Error())
 	}
-	return c.SendRaw(c.MakeMessage(msgType, data))
+	return c.SendRaw(c.MakeMessage(msgType, messageId, data))
 }
 
 func (c *Client) SendRaw(payload []byte) error {
@@ -153,10 +154,12 @@ func (c *Client) PongHandler(in string) error {
 	return nil
 }
 
-func (c *Client) MakeMessage(msgType uint32, payload []byte) []byte {
-	var header = make([]byte, 4)
-	binary.BigEndian.PutUint32(header, msgType)
-	return append(header, payload...)
+func (c *Client) MakeMessage(msgType uint32, messageId uint32, payload []byte) []byte {
+	var messageTypeHeader = make([]byte, 4)
+	var messageIdHeader = make([]byte, 4)
+	binary.BigEndian.PutUint32(messageTypeHeader, msgType)
+	binary.BigEndian.PutUint32(messageIdHeader, messageId)
+	return append(messageTypeHeader, append(messageIdHeader, payload...)...)
 }
 
 func (c *Client) GenerateToken() error {
