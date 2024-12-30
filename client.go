@@ -171,6 +171,18 @@ func (c *Client) MakeMessage(msgType uint32, messageId uint32, payload []byte) [
 func (c *Client) GenerateToken() error {
 	log.Traceln("User::CreateToken")
 
+	if nec.Config == nil {
+		return fmt.Errorf("nil config")
+	}
+
+	if nec.Config.Crypto == nil {
+		return fmt.Errorf("nil crypto config")
+	}
+
+	if nec.Config.Crypto.Key == "" {
+		return fmt.Errorf("empty sign key")
+	}
+
 	var err error
 	token, err := jwt.NewBuilder().
 		Issuer("savageking.io"). // @TODO: Move to configuration

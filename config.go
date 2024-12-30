@@ -43,5 +43,9 @@ func (c *Config) Read(filepath string) error {
 		return fmt.Errorf("failed to unmarshal config: %s", err.Error())
 	}
 
+	if c.Crypto.Key == "" {
+		return fmt.Errorf("crypto key not set")
+	}
+
 	return nil
 }
