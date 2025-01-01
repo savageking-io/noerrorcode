@@ -10,3 +10,9 @@ type MongoDBConfig struct {
 	RetryAttempts    int    `yaml:"attempts"`
 	ReconnectTimeout int    `yaml:"reconnect_timeout"`
 }
+
+type MongoDB struct{}
+
+func (d *MongoDB) Init(config *MongoDBConfig) error {
+	return nil
+}

@@ -3,6 +3,7 @@ package main
 import (
 	"strings"
 
+	"github.com/savageking-io/noerrorcode/database"
 	"github.com/savageking-io/noerrorcode/steam"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -12,6 +13,8 @@ type NoErrorCode struct {
 	Steam     *steam.Steam
 	Config    *Config
 	WebSocket *WebSocket
+	MySQL     *database.MySQL
+	Mongo     *database.MongoDB
 }
 
 var nec *NoErrorCode
@@ -37,6 +40,22 @@ func Serve(c *cli.Context) error {
 	nec.Steam = new(steam.Steam)
 	if err := nec.Steam.Init(nec.Config.Steam); err != nil {
 		log.Errorf("Steam Init failed: %s", err.Error())
+		return err
+	}
+
+	nec.MySQL = new(database.MySQL)
+	if err := nec.MySQL.Init(nec.Config.MySQL); err != nil {
+		log.Errorf("MySQL Init failed: %s", err.Error())
+		return err
+	}
+	if err := nec.MySQL.Connect(); err != nil {
+		log.Errorf("MySQL Connect failed: %s", err.Error())
+		return err
+	}
+
+	nec.Mongo = new(database.MongoDB)
+	if err := nec.Mongo.Init(nec.Config.MongoDB); err != nil {
+		log.Errorf("MongoDB Init failed: %s", err.Error())
 		return err
 	}
 

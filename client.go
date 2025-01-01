@@ -28,9 +28,13 @@ type Client struct {
 func (c *Client) Run() {
 	log.Traceln("Client::Run")
 
+	if c.conn == nil {
+		log.Errorf("Client [%s]: nil conn", c.uuid)
+		return
+	}
+
 	//c.conn.SetReadLimit(WebSocketReadBufferSize)
 	//c.conn.SetReadDeadline(time.Now().Add(time.Duration(WebSocketPingTimeout)))
-	//c.conn.SetPongHandler(c.PongHandler)
 
 	log.Infof("Working with client %s [%s]", c.uuid, c.conn.RemoteAddr().String())
 
@@ -91,6 +95,10 @@ func (c *Client) HandleAuth(messageId uint32, payload []byte) error {
 
 	response := new(schemas.AuthResponse)
 
+	if nec == nil {
+		return fmt.Errorf("nil nec")
+	}
+
 	if nec.Steam == nil {
 		response.Status = StatusCodeAuthInternalError
 		c.Send(MsgTypeAuthResponse, messageId, response)
@@ -140,6 +148,7 @@ func (c *Client) HandleAuth(messageId uint32, payload []byte) error {
 }
 
 func (c *Client) Send(msgType uint32, messageId uint32, v any) error {
+	log.Traceln("Client::Send")
 	data, err := json.Marshal(v)
 	if err != nil {
 		log.Debugf("Failed to marshal: %+v", v)
@@ -149,18 +158,14 @@ func (c *Client) Send(msgType uint32, messageId uint32, v any) error {
 }
 
 func (c *Client) SendRaw(payload []byte) error {
+	log.Traceln("Client::SendRaw")
 	if c.conn == nil {
 		return fmt.Errorf("nil connection")
 	}
 	return c.conn.WriteMessage(1, payload)
 }
-
-func (c *Client) PongHandler(in string) error {
-	c.conn.SetReadDeadline(time.Now().Add(time.Duration(WebSocketPingTimeout)))
-	return nil
-}
-
 func (c *Client) MakeMessage(msgType uint32, messageId uint32, payload []byte) []byte {
+	log.Traceln("Client::MakeMessage")
 	var messageTypeHeader = make([]byte, 4)
 	var messageIdHeader = make([]byte, 4)
 	binary.BigEndian.PutUint32(messageTypeHeader, msgType)
@@ -170,6 +175,10 @@ func (c *Client) MakeMessage(msgType uint32, messageId uint32, payload []byte) [
 
 func (c *Client) GenerateToken() error {
 	log.Traceln("User::CreateToken")
+
+	if nec == nil {
+		return fmt.Errorf("nil nec")
+	}
 
 	if nec.Config == nil {
 		return fmt.Errorf("nil config")
