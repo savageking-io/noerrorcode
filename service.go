@@ -52,10 +52,18 @@ func Serve(c *cli.Context) error {
 		log.Errorf("MySQL Connect failed: %s", err.Error())
 		return err
 	}
+	nec.MySQL.AutoMigrate()
+	nec.MySQL.PopulateIfFresh()
 
 	nec.Mongo = new(database.MongoDB)
 	if err := nec.Mongo.Init(nec.Config.MongoDB); err != nil {
 		log.Errorf("MongoDB Init failed: %s", err.Error())
+		return err
+	}
+
+	characterManager := new(CharacterManager)
+	if err := characterManager.Init(nec.MySQL); err != nil {
+		log.Errorf("Character Manager Init failed: %s", err.Error())
 		return err
 	}
 

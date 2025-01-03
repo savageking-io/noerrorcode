@@ -201,13 +201,13 @@ func (c *Client) GenerateToken() error {
 
 	if err != nil {
 		log.Errorf("Failed to build new token: %s", err.Error())
-		return fmt.Errorf("Token build failed: %s", err.Error())
+		return fmt.Errorf("token build failed: %s", err.Error())
 	}
 
 	signed, err := jwt.Sign(token, jwt.WithKey(jwa.HS256, []byte(nec.Config.Crypto.Key)))
 	if err != nil {
 		log.Errorf("Failed to sign token: %s", err.Error())
-		return fmt.Errorf("Token sign failed: %s", err.Error())
+		return fmt.Errorf("token sign failed: %s", err.Error())
 	}
 
 	c.token = string(signed)

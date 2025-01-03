@@ -2,6 +2,8 @@ CC=go
 VERSION=$(shell cat VERSION)
 NAME_BASE=noerrorcode
 SOURCES=main.go \
+		character.go \
+		character_manager.go \
 		client.go \
 		service.go \
 		local_client.go \
