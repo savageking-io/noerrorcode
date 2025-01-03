@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/savageking-io/noerrorcode/database"
 	"github.com/savageking-io/noerrorcode/steam"
@@ -68,6 +70,77 @@ func Serve(c *cli.Context) error {
 	}
 
 	return nec.WebSocket.Run()
+}
+
+func InitMongo(config *database.MongoDBConfig) (*database.MongoDB, error) {
+	Mongo := new(database.MongoDB)
+	if config == nil {
+		return nil, fmt.Errorf("nil mongo config")
+	}
+	if err := Mongo.Init(config); err != nil {
+		return nil, fmt.Errorf("%s", err.Error())
+	}
+	connectTime := time.Unix(0, 0)
+	attempt := 0
+	for {
+		if time.Since(connectTime) > time.Duration(time.Duration(config.ReconnectTimeout)*time.Second) {
+			connectTime = time.Now()
+			attempt++
+			if err := Mongo.Connect(); err != nil {
+				log.Errorf("%s", err.Error())
+				if !config.Retry {
+					return nil, fmt.Errorf("mongo init: %s", err.Error())
+				}
+				if config.RetryAttempts > 0 && attempt >= config.RetryAttempts {
+					return nil, fmt.Errorf("mongo init: failed after %d attempts: %s", attempt, err.Error())
+				}
+				log.Infof("Will try to reconnect in %d seconds", config.ReconnectTimeout)
+			} else {
+				break
+			}
+		}
+
+		time.Sleep(time.Millisecond * 100)
+	}
+
+	return Mongo, nil
+}
+
+func InitMySQL(config *database.MySQLConfig) (*database.MySQL, error) {
+	MySQL := new(database.MySQL)
+
+	if config == nil {
+		return nil, fmt.Errorf("mysql init: nil config")
+	}
+
+	if err := MySQL.Init(config); err != nil {
+		return nil, fmt.Errorf("mysql init: %s", err.Error())
+	}
+
+	connectTime := time.Unix(0, 0)
+	attempt := 0
+	for {
+		if time.Since(connectTime) > time.Duration(time.Duration(config.RetryTimeout)*time.Second) {
+			connectTime = time.Now()
+			attempt++
+			if err := MySQL.Connect(); err != nil {
+				log.Errorf("%s", err.Error())
+				if !config.Retry {
+					return nil, fmt.Errorf("mysql init: %s", err.Error())
+				}
+				if config.RetryAttempts > 0 && attempt >= config.RetryAttempts {
+					return nil, fmt.Errorf("mysql init: failed after %d sttempts: %s", attempt, err.Error())
+				}
+				log.Infof("Will try to reconnect in %d seconds", config.RetryTimeout)
+			} else {
+				break
+			}
+		}
+
+		time.Sleep(time.Millisecond * 100)
+	}
+
+	return MySQL, nil
 }
 
 func SetLogLevel(level string) {

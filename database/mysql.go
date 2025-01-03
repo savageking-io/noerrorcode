@@ -11,11 +11,14 @@ import (
 )
 
 type MySQLConfig struct {
-	Hostname string `yaml:"hostname"`
-	Port     uint16 `yaml:"port"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	Database string `yaml:"database"`
+	Hostname      string `yaml:"hostname"`
+	Port          uint16 `yaml:"port"`
+	Username      string `yaml:"username"`
+	Password      string `yaml:"password"`
+	Database      string `yaml:"database"`
+	Retry         bool   `yaml:"retry"`
+	RetryAttempts int    `yaml:"retry_attempts"`
+	RetryTimeout  int    `yaml:"retry_timeout"`
 }
 
 type MySQL struct {
