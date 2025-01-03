@@ -12,11 +12,11 @@ import (
 )
 
 type NoErrorCode struct {
-	Steam     *steam.Steam
-	Config    *Config
-	WebSocket *WebSocket
-	MySQL     *database.MySQL
-	Mongo     *database.MongoDB
+	//Steam     *steam.Steam
+	//Config    *Config
+	//WebSocket *WebSocket
+	// MySQL     *database.MySQL
+	// Mongo     *database.MongoDB
 }
 
 var nec *NoErrorCode
@@ -25,51 +25,53 @@ func Serve(c *cli.Context) error {
 	SetLogLevel(LogLevel)
 	log.Infof("Starting NoErrorCode. Version %s", AppVersion)
 
-	nec = new(NoErrorCode)
+	//nec = new(NoErrorCode)
 
-	nec.Config = new(Config)
-	if err := nec.Config.Read(ConfigFilepath); err != nil {
+	config := new(Config)
+	if err := config.Read(ConfigFilepath); err != nil {
 		log.Errorf("Failed to read config: %s", err.Error())
 		return err
 	}
 
-	nec.WebSocket = new(WebSocket)
-	if err := nec.WebSocket.Init(nec.Config.WebSocket); err != nil {
-		log.Errorf("Failed to initialize WebSocket: %s", err.Error())
-		return err
-	}
-
-	nec.Steam = new(steam.Steam)
-	if err := nec.Steam.Init(nec.Config.Steam); err != nil {
-		log.Errorf("Steam Init failed: %s", err.Error())
-		return err
-	}
-
-	nec.MySQL = new(database.MySQL)
-	if err := nec.MySQL.Init(nec.Config.MySQL); err != nil {
+	mysql, err := InitMySQL(config.MySQL)
+	if err != nil {
 		log.Errorf("MySQL Init failed: %s", err.Error())
 		return err
 	}
-	if err := nec.MySQL.Connect(); err != nil {
-		log.Errorf("MySQL Connect failed: %s", err.Error())
-		return err
-	}
-	nec.MySQL.AutoMigrate()
-	nec.MySQL.PopulateIfFresh()
+	mysql.AutoMigrate()
+	mysql.PopulateIfFresh()
 
-	nec.Mongo = new(database.MongoDB)
-	if err := nec.Mongo.Init(nec.Config.MongoDB); err != nil {
+	mongo, err := InitMongo(config.MongoDB)
+	if err != nil {
 		log.Errorf("MongoDB Init failed: %s", err.Error())
 		return err
 	}
 
+	steam := new(steam.Steam)
+	if err := steam.Init(config.Steam); err != nil {
+		log.Errorf("Steam Init failed: %s", err.Error())
+		return err
+	}
+
+	clients := new(ClientManager)
+	if err := clients.Init(steam, mysql, mongo, config.Crypto); err != nil {
+		log.Errorf("Failed to initialize Client Manager: %s", err.Error())
+		return err
+	}
+
+	ws := new(WebSocket)
+	if err := ws.Init(config.WebSocket, clients); err != nil {
+		log.Errorf("Failed to initialize WebSocket: %s", err.Error())
+		return err
+	}
+
 	characterManager := new(CharacterManager)
-	if err := characterManager.Init(nec.MySQL); err != nil {
+	if err := characterManager.Init(mysql); err != nil {
 		log.Errorf("Character Manager Init failed: %s", err.Error())
 		return err
 	}
 
-	return nec.WebSocket.Run()
+	return ws.Run()
 }
 
 func InitMongo(config *database.MongoDBConfig) (*database.MongoDB, error) {

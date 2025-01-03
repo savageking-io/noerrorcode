@@ -64,10 +64,12 @@ func (db *MySQL) Get() *gorm.DB {
 }
 
 func (db *MySQL) AutoMigrate() {
-	db.db.AutoMigrate(&schemas.User{}, &schemas.Session{}, &schemas.SteamLink{}, &schemas.CharacterStats{}, &schemas.CharacterStatsFloat{}, &schemas.CharacterStatsInteger{}, &schemas.CharacterStatsString{})
+	log.Traceln("Mysql::AutoMigrate")
+	db.db.AutoMigrate(&schemas.User{}, &schemas.Session{}, &schemas.SteamUser{}, &schemas.CharacterStats{}, &schemas.CharacterStatsFloat{}, &schemas.CharacterStatsInteger{}, &schemas.CharacterStatsString{})
 }
 
 func (db *MySQL) PopulateIfFresh() {
+	log.Traceln("Mysql::PopulateIfFresh")
 	var stat schemas.CharacterStats
 	result := db.db.First(&stat)
 	if result.RowsAffected > 0 {

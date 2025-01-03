@@ -4,12 +4,9 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/savageking-io/noerrorcode/schemas"
 	log "github.com/sirupsen/logrus"
 )
@@ -23,15 +20,23 @@ type Client struct {
 	uuid           uuid.UUID
 	token          string
 	PlatformUserID string
+	manager        *ClientManager
+	user           *schemas.User
 }
 
-func (c *Client) Run() {
+func (c *Client) Run(manager *ClientManager) {
 	log.Traceln("Client::Run")
 
 	if c.conn == nil {
-		log.Errorf("Client [%s]: nil conn", c.uuid)
+		log.Errorf("Client [%s]: nil conn", c.uuid.String())
 		return
 	}
+
+	if manager == nil {
+		log.Errorf("Client [%s]: nil client manager", c.uuid.String())
+		return
+	}
+	c.manager = manager
 
 	//c.conn.SetReadLimit(WebSocketReadBufferSize)
 	//c.conn.SetReadDeadline(time.Now().Add(time.Duration(WebSocketPingTimeout)))
@@ -93,13 +98,13 @@ func (c *Client) HandleAuth(messageId uint32, payload []byte) error {
 	log.Traceln("Client::HandleAuth")
 	log.Debugf("Client [%s]: Requested auth", c.uuid)
 
-	response := new(schemas.AuthResponse)
-
-	if nec == nil {
-		return fmt.Errorf("nil nec")
+	if c.manager == nil {
+		return fmt.Errorf("nil client manager")
 	}
 
-	if nec.Steam == nil {
+	response := new(schemas.AuthResponse)
+
+	if c.manager.steam == nil {
 		response.Status = StatusCodeAuthInternalError
 		c.Send(MsgTypeAuthResponse, messageId, response)
 		return fmt.Errorf("nil steam")
@@ -115,7 +120,7 @@ func (c *Client) HandleAuth(messageId uint32, payload []byte) error {
 
 	log.Debugf("Client [%s]: Auth ticket: %s", c.uuid, packet.Ticket)
 
-	steamResponse, err := nec.Steam.AuthUserTicket([]byte(packet.Ticket))
+	steamResponse, err := c.manager.steam.AuthUserTicket([]byte(packet.Ticket))
 	if err != nil {
 		response.Status = StatusCodeAuthExternalError
 		c.Send(MsgTypeAuthResponse, messageId, response)
@@ -135,12 +140,30 @@ func (c *Client) HandleAuth(messageId uint32, payload []byte) error {
 	}
 
 	// Authentication succeed
-	c.PlatformUserID = steamResponse.Response.Params.SteamID
-	if err := c.GenerateToken(); err != nil {
+	steamData := steamResponse.Response.Params
+	c.PlatformUserID = steamData.SteamID
+	c.token, err = c.manager.GenerateToken(c.PlatformUserID)
+	if err != nil {
 		response.Status = StatusCodeGenerateTokenFailed
 		c.Send(MsgTypeAuthResponse, messageId, response)
 		return fmt.Errorf("token failed: %s", err.Error())
 	}
+
+	user, err := c.manager.GetUserBySteamID(c.PlatformUserID)
+	if err != nil {
+		response.Status = StatusCodeAuthInternalError
+		c.Send(MsgTypeAuthResponse, messageId, response)
+		return fmt.Errorf("retrieve user failed: %s", err.Error())
+	}
+	if user == nil {
+		user, err = c.manager.CreateUserFromSteam(steamData.SteamID, steamData.OwnerSteamID, steamData.VACBanned, steamData.PublisherBanned)
+		if err != nil {
+			response.Status = StatusCodeAuthInternalError
+			c.Send(MsgTypeAuthResponse, messageId, response)
+			return fmt.Errorf("create user failed: %s", err.Error())
+		}
+	}
+	c.user = user
 
 	response.Status = 0
 	response.Token = c.token
@@ -171,46 +194,4 @@ func (c *Client) MakeMessage(msgType uint32, messageId uint32, payload []byte) [
 	binary.BigEndian.PutUint32(messageTypeHeader, msgType)
 	binary.BigEndian.PutUint32(messageIdHeader, messageId)
 	return append(messageTypeHeader, append(messageIdHeader, payload...)...)
-}
-
-func (c *Client) GenerateToken() error {
-	log.Traceln("User::CreateToken")
-
-	if nec == nil {
-		return fmt.Errorf("nil nec")
-	}
-
-	if nec.Config == nil {
-		return fmt.Errorf("nil config")
-	}
-
-	if nec.Config.Crypto == nil {
-		return fmt.Errorf("nil crypto config")
-	}
-
-	if nec.Config.Crypto.Key == "" {
-		return fmt.Errorf("empty sign key")
-	}
-
-	var err error
-	token, err := jwt.NewBuilder().
-		Issuer("savageking.io"). // @TODO: Move to configuration
-		IssuedAt(time.Now()).
-		Claim("uid", c.PlatformUserID).
-		Build()
-
-	if err != nil {
-		log.Errorf("Failed to build new token: %s", err.Error())
-		return fmt.Errorf("token build failed: %s", err.Error())
-	}
-
-	signed, err := jwt.Sign(token, jwt.WithKey(jwa.HS256, []byte(nec.Config.Crypto.Key)))
-	if err != nil {
-		log.Errorf("Failed to sign token: %s", err.Error())
-		return fmt.Errorf("token sign failed: %s", err.Error())
-	}
-
-	c.token = string(signed)
-	log.Debugf("Client [%s] generated token: %s", c.uuid, c.token)
-	return nil
 }

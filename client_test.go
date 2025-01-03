@@ -7,31 +7,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/savageking-io/noerrorcode/schemas"
 )
-
-func TestClient_Run(t *testing.T) {
-	type fields struct {
-		conn           *websocket.Conn
-		uuid           uuid.UUID
-		token          string
-		PlatformUserID string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &Client{
-				conn:           tt.fields.conn,
-				uuid:           tt.fields.uuid,
-				token:          tt.fields.token,
-				PlatformUserID: tt.fields.PlatformUserID,
-			}
-			c.Run()
-		})
-	}
-}
 
 func TestClient_Handle(t *testing.T) {
 	p0 := []byte{}
@@ -122,40 +99,6 @@ func TestClient_HandleHello(t *testing.T) {
 			}
 			if err := c.HandleHello(tt.args.messageId, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("Client.HandleHello() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestClient_HandleAuth(t *testing.T) {
-	type fields struct {
-		conn           *websocket.Conn
-		uuid           uuid.UUID
-		token          string
-		PlatformUserID string
-	}
-	type args struct {
-		messageId uint32
-		payload   []byte
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &Client{
-				conn:           tt.fields.conn,
-				uuid:           tt.fields.uuid,
-				token:          tt.fields.token,
-				PlatformUserID: tt.fields.PlatformUserID,
-			}
-			if err := c.HandleAuth(tt.args.messageId, tt.args.payload); (err != nil) != tt.wantErr {
-				t.Errorf("Client.HandleAuth() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -264,22 +207,24 @@ func TestClient_MakeMessage(t *testing.T) {
 	}
 }
 
-func TestClient_GenerateToken(t *testing.T) {
-	//nec0 := new(NoErrorCode)
-
+func TestClient_Run(t *testing.T) {
 	type fields struct {
 		conn           *websocket.Conn
 		uuid           uuid.UUID
 		token          string
 		PlatformUserID string
+		manager        *ClientManager
+	}
+	type args struct {
+		manager *ClientManager
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
+		name   string
+		fields fields
+		args   args
 	}{
-		{"Nil Nec", fields{}, true},
-		{"Nil Config", fields{}, true},
+		{"Empty conn", fields{}, args{}},
+		{"Empty manager", fields{}, args{}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -288,9 +233,48 @@ func TestClient_GenerateToken(t *testing.T) {
 				uuid:           tt.fields.uuid,
 				token:          tt.fields.token,
 				PlatformUserID: tt.fields.PlatformUserID,
+				manager:        tt.fields.manager,
 			}
-			if err := c.GenerateToken(); (err != nil) != tt.wantErr {
-				t.Errorf("Client.GenerateToken() error = %v, wantErr %v", err, tt.wantErr)
+			c.Run(tt.args.manager)
+		})
+	}
+}
+
+func TestClient_HandleAuth(t *testing.T) {
+	cm0 := new(ClientManager)
+	type fields struct {
+		conn           *websocket.Conn
+		uuid           uuid.UUID
+		token          string
+		PlatformUserID string
+		manager        *ClientManager
+		user           *schemas.User
+	}
+	type args struct {
+		messageId uint32
+		payload   []byte
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{"Nil client manager", fields{}, args{}, true},
+		{"Nil Steam", fields{manager: cm0}, args{}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Client{
+				conn:           tt.fields.conn,
+				uuid:           tt.fields.uuid,
+				token:          tt.fields.token,
+				PlatformUserID: tt.fields.PlatformUserID,
+				manager:        tt.fields.manager,
+				user:           tt.fields.user,
+			}
+			if err := c.HandleAuth(tt.args.messageId, tt.args.payload); (err != nil) != tt.wantErr {
+				t.Errorf("Client.HandleAuth() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

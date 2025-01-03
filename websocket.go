@@ -3,9 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"sync"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
@@ -17,23 +15,24 @@ var upgrader = websocket.Upgrader{
 }
 
 type WebSocket struct {
-	config   *WebSocketConfig
-	connchan chan *websocket.Conn
-	clients  map[uuid.UUID]*Client
-	mutex    sync.Mutex
+	config  *WebSocketConfig
+	clients *ClientManager
 }
 
-func (ws *WebSocket) Init(config *WebSocketConfig) error {
+func (ws *WebSocket) Init(config *WebSocketConfig, clientManager *ClientManager) error {
 	log.Traceln("WebSocket::Init")
 	if config == nil {
 		return fmt.Errorf("websocket: nil config")
 	}
+	if clientManager == nil {
+		return fmt.Errorf("websocket: nil client manager")
+	}
+	ws.clients = clientManager
 	ws.config = config
 	if ws.config.URL == "" {
 		ws.config.URL = DefaultWebSocketURL
 	}
-	ws.connchan = make(chan *websocket.Conn)
-	ws.clients = make(map[uuid.UUID]*Client)
+
 	return nil
 }
 
@@ -54,47 +53,17 @@ func (ws *WebSocket) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u := uuid.New()
+	log.Debugf("New incoming connection from %s", r.RemoteAddr)
 
-	log.Debugf("New incoming connection upgraded from %s as %s", r.RemoteAddr, u)
-	defer ws.UnregisterClient(u)
-
-	if err := ws.RegisterClient(c, u); err != nil {
-		log.Errorf("WebSocket: failed to register client: %s", err.Error())
+	client, err := ws.clients.RegisterClient(c)
+	if err != nil {
+		log.Errorf("Failed to register new client: %s", err.Error())
+		if err := c.Close(); err != nil {
+			log.Errorf("Failed to close broken connection: %s", err.Error())
+		}
 		return
 	}
 
-}
-
-func (ws *WebSocket) RegisterClient(conn *websocket.Conn, id uuid.UUID) error {
-	log.Traceln("WebSocket::RegisterClient")
-	if conn == nil {
-		return fmt.Errorf("nil conn")
-	}
-	log.Infof("WebSocket: Registering new client %s [%s]", id, conn.RemoteAddr().String())
-	client := &Client{
-		conn: conn,
-		uuid: id,
-	}
-	ws.mutex.Lock()
-	ws.clients[id] = client
-	ws.mutex.Unlock()
-	ws.clients[id].Run()
-	return nil
-}
-
-func (ws *WebSocket) UnregisterClient(id uuid.UUID) {
-	log.Traceln("WebSocket::UnregisterClient")
-	client, exists := ws.clients[id]
-	if !exists {
-		log.Debugf("WebSocket: failed to unregister client: %s not found", id.String())
-		return
-	}
-	log.Infof("WebSocket: Unregistering client %s", id.String())
-	ws.mutex.Lock()
-	if client.conn != nil {
-		client.conn.Close()
-	}
-	delete(ws.clients, id)
-	ws.mutex.Unlock()
+	defer ws.clients.UnregisterClient(client.uuid)
+	client.Run(ws.clients)
 }

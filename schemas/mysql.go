@@ -29,6 +29,17 @@ type User struct {
 	Username string
 	Password string
 	Email    string
+	Steam    SteamUser
+}
+
+type SteamUser struct {
+	gorm.Model
+
+	UserID       uint
+	SteamID      string
+	OwnerSteamID string
+	VAC          bool
+	Ban          bool // Publisher ban
 }
 
 type Session struct {
@@ -39,17 +50,6 @@ type Session struct {
 	UserAgent string
 	Revision  string
 	User      User `gorm:"foreignKey:UID"`
-}
-
-type SteamLink struct {
-	gorm.Model
-
-	UID          uint
-	User         User `gorm:"foreignKey:UID"`
-	SteamID      string
-	OwnerSteamID string
-	VAC          bool
-	Ban          bool // Publisher ban
 }
 
 type CharacterStats struct {

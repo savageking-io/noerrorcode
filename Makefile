@@ -5,6 +5,7 @@ SOURCES=main.go \
 		character.go \
 		character_manager.go \
 		client.go \
+		client_manager.go \
 		service.go \
 		local_client.go \
 		config.go \
