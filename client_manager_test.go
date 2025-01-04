@@ -112,7 +112,7 @@ func TestClientManager_GetUserBySteamID(t *testing.T) {
 	}{
 		{"Nil MySQL", fields{}, args{}, nil, true},
 		{"Empty SteamID", fields{mysql: db}, args{}, nil, true},
-		{"Not Found by SteamID", fields{mysql: db}, args{"000000000000000"}, nil, true},
+		{"Not Found by SteamID", fields{mysql: db}, args{"000000000000000"}, nil, false},
 		{"Found by SteamID", fields{mysql: db}, args{"000000000000000"}, user, false},
 	}
 	for _, tt := range tests {

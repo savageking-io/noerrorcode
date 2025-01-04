@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/savageking-io/noerrorcode/schemas"
 	"github.com/savageking-io/noerrorcode/steam"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type ClientManager struct {
@@ -125,10 +127,10 @@ func (d *ClientManager) GetUserBySteamID(steamID string) (*schemas.User, error) 
 	user := &schemas.User{}
 	result := d.mysql.Get().Joins("Steam").Where("Steam.steam_id = ?", steamID).First(&user)
 	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("get user by steam ID: %s", result.Error.Error())
-	}
-	if result.RowsAffected == 0 {
-		return nil, nil
 	}
 
 	return user, nil
