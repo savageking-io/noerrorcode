@@ -50,6 +50,7 @@ func (db *MySQL) Connect() error {
 		ParseTime: true,
 	}
 
+	log.Debugf("MySQL DSN: %s", conf.FormatDSN())
 	var err error
 	db.db, err = gorm.Open(mysql.Open(conf.FormatDSN()), &gorm.Config{})
 	if err != nil {
