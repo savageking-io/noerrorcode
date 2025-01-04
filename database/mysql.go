@@ -48,6 +48,7 @@ func (db *MySQL) Connect() error {
 	conf := &_mysql.Config{
 		User:      db.config.Username,
 		Passwd:    db.config.Password,
+		Net:       "tcp",
 		Addr:      fmt.Sprintf("%s:%d", db.config.Hostname, db.config.Port),
 		DBName:    db.config.Database,
 		ParseTime: true,
