@@ -123,7 +123,7 @@ func (d *ClientManager) GetUserBySteamID(steamID string) (*schemas.User, error) 
 	}
 
 	user := &schemas.User{}
-	result := d.mysql.Get().Joins("Steam").Where("steam_user.user_id = ?", steamID).First(&user)
+	result := d.mysql.Get().Joins("Steam").Where("steam_users.user_id = ?", steamID).First(&user)
 	if result.Error != nil {
 		return nil, fmt.Errorf("get user by steam ID: %s", result.Error.Error())
 	}
