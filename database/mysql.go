@@ -23,7 +23,7 @@ type MySQLConfig struct {
 
 type MySQL struct {
 	config *MySQLConfig
-	db     *gorm.DB
+	DB     *gorm.DB
 }
 
 func (db *MySQL) Init(config *MySQLConfig) error {
@@ -56,7 +56,7 @@ func (db *MySQL) Connect() error {
 
 	log.Debugf("MySQL DSN: %s", conf.FormatDSN())
 	var err error
-	db.db, err = gorm.Open(mysql.Open(conf.FormatDSN()), &gorm.Config{})
+	db.DB, err = gorm.Open(mysql.Open(conf.FormatDSN()), &gorm.Config{})
 	if err != nil {
 		return fmt.Errorf("mysql connect failed: %s", err.Error())
 	}
@@ -65,18 +65,19 @@ func (db *MySQL) Connect() error {
 }
 
 func (db *MySQL) Get() *gorm.DB {
-	return db.db
+	return db.DB
 }
 
 func (db *MySQL) AutoMigrate() {
 	log.Traceln("Mysql::AutoMigrate")
-	db.db.AutoMigrate(&schemas.User{}, &schemas.Session{}, &schemas.SteamUser{}, &schemas.CharacterStats{}, &schemas.CharacterStatsFloat{}, &schemas.CharacterStatsInteger{}, &schemas.CharacterStatsString{})
+	db.DB.AutoMigrate(&schemas.User{}, &schemas.Session{}, &schemas.SteamUser{}, &schemas.CharacterStats{}, &schemas.CharacterStatsFloat{}, &schemas.CharacterStatsInteger{}, &schemas.CharacterStatsString{})
 }
 
 func (db *MySQL) PopulateIfFresh() {
+	db.PopulateUsersIfNeeded()
 	log.Traceln("Mysql::PopulateIfFresh")
 	var stat schemas.CharacterStats
-	result := db.db.First(&stat)
+	result := db.Get().First(&stat)
 	if result.RowsAffected > 0 {
 		return
 	}
@@ -93,7 +94,7 @@ func (db *MySQL) PopulateIfFresh() {
 			},
 		}
 
-		result = db.db.Create(&name)
+		result = db.Get().Create(&name)
 		if result.Error != nil {
 			log.Errorf("DB::MySQL: Failed to create stat: %s", result.Error.Error())
 			return
@@ -114,7 +115,7 @@ func (db *MySQL) PopulateIfFresh() {
 			},
 		}
 
-		result = db.db.Create(&level)
+		result = db.Get().Create(&level)
 		if result.Error != nil {
 			log.Errorf("DB::MySQL: Failed to create LVL stat: %s", result.Error.Error())
 			return
@@ -192,11 +193,38 @@ func (db *MySQL) PopulateIfFresh() {
 			},
 		}
 
-		result = db.db.Create(&stats)
+		result = db.Get().Create(&stats)
 		if result.Error != nil {
 			log.Errorf("DB::MySQL: Failed to create stats: %s", result.Error.Error())
 			return
 		}
 		log.Infof("DB::MySQL: Default stats created")
 	}
+
+}
+
+func (db *MySQL) PopulateUsersIfNeeded() {
+	log.Traceln("MySQL::PopulateUsersIfNeeded")
+
+	var user schemas.User
+	result := db.Get().First(&user)
+	if result.RowsAffected > 0 {
+		return
+	}
+
+	user = schemas.User{
+		Username: "firstuser",
+		Password: "secretpassword",
+		Email:    "user@localhost",
+		Steam: schemas.SteamUser{
+			SteamID:      "000000000000000",
+			OwnerSteamID: "111111111111111",
+		},
+	}
+	result = db.Get().Create(&user)
+	if result.Error != nil {
+		log.Errorf("DB::MySQL: Failed to create user: %s", result.Error.Error())
+		return
+	}
+	log.Infof("DB::MySQL: Default user created")
 }
