@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/savageking-io/noerrorcode/database"
 	"github.com/savageking-io/noerrorcode/schemas"
 	"github.com/savageking-io/noerrorcode/steam"
@@ -88,6 +88,10 @@ func (d *ClientManager) GenerateToken(userID string) (string, error) {
 		return "", fmt.Errorf("empty sign key")
 	}
 
+	if userID == "" {
+		return "", fmt.Errorf("empty user id")
+	}
+
 	var err error
 	token, err := jwt.NewBuilder().
 		Issuer(d.cryptoConfig.Issuer).
@@ -99,7 +103,7 @@ func (d *ClientManager) GenerateToken(userID string) (string, error) {
 		return "", fmt.Errorf("token build failed: %s", err.Error())
 	}
 
-	signed, err := jwt.Sign(token, jwt.WithKey(jwa.HS256, []byte(d.cryptoConfig.Key)))
+	signed, err := jwt.Sign(token, jwt.WithKey(jwa.HS256(), []byte(d.cryptoConfig.Key)))
 	if err != nil {
 		return "", fmt.Errorf("token sign failed: %s", err.Error())
 	}

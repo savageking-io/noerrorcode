@@ -1,6 +1,8 @@
 module github.com/savageking-io/noerrorcode
 
-go 1.22.1
+go 1.22.6
+
+toolchain go1.23.4
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -16,10 +18,8 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
-	github.com/lestrrat-go/httprc v1.0.6 // indirect
-	github.com/lestrrat-go/iter v1.0.2 // indirect
-	github.com/lestrrat-go/jwx v1.2.30 // indirect
-	github.com/lestrrat-go/jwx/v2 v2.1.3 // indirect
+	github.com/lestrrat-go/httprc/v3 v3.0.0-beta1 // indirect
+	github.com/lestrrat-go/jwx/v3 v3.0.0-alpha1 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/mattn/go-sqlite3 v1.14.24 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
