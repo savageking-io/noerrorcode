@@ -27,7 +27,8 @@ type WebSocketConfig struct {
 // CryptoConfig - configuration for JWT Tokens
 // Currently only HS256 is supported
 type CryptoConfig struct {
-	Key string `yaml:"sign_key"`
+	Key    string `yaml:"sign_key"`
+	Issuer string `yaml:"issuer"`
 }
 
 func (c *Config) Read(filepath string) error {
@@ -43,9 +44,23 @@ func (c *Config) Read(filepath string) error {
 		return fmt.Errorf("failed to unmarshal config: %s", err.Error())
 	}
 
-	if c.Crypto == nil || c.Crypto.Key == "" {
-		return fmt.Errorf("crypto key not set")
+	if c.Crypto == nil {
+		return fmt.Errorf("cryptography not configured")
 	}
 
+	if err := c.Crypto.Verify(); err != nil {
+		return fmt.Errorf("cryptography: %s", err.Error())
+	}
+
+	return nil
+}
+
+func (cc *CryptoConfig) Verify() error {
+	if cc.Issuer == "" {
+		return fmt.Errorf("empty issuer")
+	}
+	if cc.Key == "" {
+		return fmt.Errorf("empty sign key")
+	}
 	return nil
 }

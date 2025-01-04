@@ -90,7 +90,7 @@ func (d *ClientManager) GenerateToken(userID string) (string, error) {
 
 	var err error
 	token, err := jwt.NewBuilder().
-		Issuer("savageking.io"). // @TODO: Move to configuration
+		Issuer(d.cryptoConfig.Issuer).
 		IssuedAt(time.Now()).
 		Claim("uid", userID).
 		Build()

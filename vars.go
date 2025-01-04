@@ -12,10 +12,16 @@ var (
 )
 
 const (
+	MsgHeaderSize       uint32 = 8
 	MsgTypeHello        uint32 = 0xFEF0BAB0
 	MsgTypeWelcome      uint32 = 0xFEF0BAB1
 	MsgTypeAuth         uint32 = 0xFEF0FEFA
 	MsgTypeAuthResponse uint32 = 0xFEF0FEFB
+
+	// Characters
+	MsgTypeCharactersGet   uint32 = 0xC4A97157
+	MsgTypeCharacterGet    uint32 = 0xC4A97158
+	MsgTypeCharacterCreate uint32 = 0xC4A97159
 )
 
 // Auth Status Codes 100XX

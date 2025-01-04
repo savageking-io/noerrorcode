@@ -1,0 +1,5 @@
+---
+
+crypto:
+  sign_key: "key"
+  issuer: "issuer"

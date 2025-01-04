@@ -21,10 +21,11 @@ func TestConfig_Read(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		/*
-			{"No filepath", fields{}, args{}, true},
-			{"Broken config", fields{}, args{filepath: "testdata/config/broken.yaml"}, true},
-			{"Working config", fields{}, args{filepath: "testdata/config/normal.yaml"}, false},*/
+		{"No filepath", fields{}, args{}, true},
+		{"Broken config", fields{}, args{filepath: "testdata/config/broken.yaml"}, true},
+		{"No crypto", fields{}, args{filepath: "testdata/config/normal.yaml"}, true},
+		{"Broken cryptography", fields{}, args{filepath: "testdata/config/broken-crypto.yaml"}, true},
+		{"Working config", fields{}, args{filepath: "testdata/config/working.yaml"}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
