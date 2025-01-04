@@ -42,6 +42,9 @@ func (db *MySQL) Connect() error {
 		return fmt.Errorf("mysql: nil config")
 	}
 
+	log.Debugf("MySQL Hostname: %s", db.config.Hostname)
+	log.Debugf("MySQL Port: %d", db.config.Port)
+
 	conf := &_mysql.Config{
 		User:      db.config.Username,
 		Passwd:    db.config.Password,
