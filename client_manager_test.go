@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	//_mysql "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/savageking-io/noerrorcode/database"
 	"github.com/savageking-io/noerrorcode/schemas"
@@ -132,6 +131,52 @@ func TestClientManager_GetUserBySteamID(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ClientManager.GetUserBySteamID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestClientManager_CreateUserFromSteam(t *testing.T) {
+	type fields struct {
+		clients      map[uuid.UUID]*Client
+		mutex        sync.Mutex
+		steam        *steam.Steam
+		cryptoConfig *CryptoConfig
+		mysql        *database.MySQL
+		mongo        *database.MongoDB
+	}
+	type args struct {
+		steamID      string
+		ownerSteamID string
+		vac          bool
+		ban          bool
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *schemas.User
+		wantErr bool
+	}{
+		{"Nil MySQL", fields{}, args{}, nil, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &ClientManager{
+				clients:      tt.fields.clients,
+				mutex:        tt.fields.mutex,
+				steam:        tt.fields.steam,
+				cryptoConfig: tt.fields.cryptoConfig,
+				mysql:        tt.fields.mysql,
+				mongo:        tt.fields.mongo,
+			}
+			got, err := d.CreateUserFromSteam(tt.args.steamID, tt.args.ownerSteamID, tt.args.vac, tt.args.ban)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ClientManager.CreateUserFromSteam() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ClientManager.CreateUserFromSteam() = %v, want %v", got, tt.want)
 			}
 		})
 	}

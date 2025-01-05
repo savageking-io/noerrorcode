@@ -59,6 +59,7 @@ type CharacterStats struct {
 	Description string
 	ValueType   FieldType `sql:"type:ENUM('INT', 'STR', 'FLOAT')" gorm:"column:value_type"`
 	CanBeEmpty  bool
+	IsRequired  bool
 	String      CharacterStatsString
 	Integer     CharacterStatsInteger
 	Float       CharacterStatsFloat
@@ -86,7 +87,7 @@ type CharacterStatsFloat struct {
 	gorm.Model
 
 	CharacterStatsID uint
-	Default          float32
-	Min              float32
-	Max              float32
+	Default          float64
+	Min              float64
+	Max              float64
 }

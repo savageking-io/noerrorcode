@@ -92,6 +92,7 @@ func (db *MySQL) PopulateIfFresh() {
 				Min: 4,
 				Max: 32,
 			},
+			IsRequired: true,
 		}
 
 		result = db.Get().Create(&name)
