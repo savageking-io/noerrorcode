@@ -48,7 +48,7 @@ func main() {
 		},
 		{
 			Name:  "client",
-			Usage: "Start a test client",
+			Usage: "Integration test client",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:        "host",

@@ -19,9 +19,12 @@ const (
 	MsgTypeAuthResponse uint32 = 0xFEF0FEFB
 
 	// Characters
-	MsgTypeCharactersGet   uint32 = 0xC4A97157
-	MsgTypeCharacterGet    uint32 = 0xC4A97158
-	MsgTypeCharacterCreate uint32 = 0xC4A97159
+	MsgTypeCharactersGet          uint32 = 0xC4A97157 // Get list of all player's character IDs
+	MsgTypeCharacterGet           uint32 = 0xC4A97158 // Get Character by ID
+	MsgTypeCharacterCreate        uint32 = 0xC4A97159 // Create new character
+	MsgTypeCharacterValidateState uint32 = 0xC4A97160 // Validate specific stat
+	MsgTypeCharacterSetStat       uint32 = 0xC4A97161 // Update stat value
+	MsgTypeCharacterGetStat       uint32 = 0xC4A97162 // Get stat value
 )
 
 // Auth Status Codes 100XX

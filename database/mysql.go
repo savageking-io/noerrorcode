@@ -88,6 +88,8 @@ func (db *MySQL) PopulateIfFresh() {
 			Name:        "character_name",
 			Description: "Character's name",
 			ValueType:   "STR",
+			IsUnique:    true,
+			UniqueScope: 1,
 			String: schemas.CharacterStatsString{
 				Min: 4,
 				Max: 32,

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 
+	"github.com/savageking-io/noerrorcode/database"
 	"github.com/urfave/cli"
 )
 
@@ -46,6 +48,32 @@ func TestSetLogLevel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			SetLogLevel(tt.args.level)
+		})
+	}
+}
+
+func TestInitMySQL(t *testing.T) {
+	type args struct {
+		config *database.MySQLConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *database.MySQL
+		wantErr bool
+	}{
+		{"Nil config", args{}, nil, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := InitMySQL(tt.args.config)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("InitMySQL() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("InitMySQL() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

@@ -31,6 +31,9 @@ func (d *CharacterManager) LoadCharacterStats() error {
 	if d.mysql == nil {
 		return fmt.Errorf("load character stats: nil mysql")
 	}
+	if d.mysql.Get() == nil {
+		return fmt.Errorf("mysql not initialized")
+	}
 
 	// Load all character stats
 	result := d.mysql.Get().Find(&d.stats)
