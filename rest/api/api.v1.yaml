@@ -1,0 +1,279 @@
+openapi: 3.0.0
+info:
+  title: NoErrorCode API
+  description: Game Backend API
+  version: 0.0.1
+servers:
+  - url: http://localhost:8080
+    description: Local Docker Container 
+paths:
+  /status:
+    get:
+      summary: Get the status of the API
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+  /auth:
+    post:
+      summary: Authenticate a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "user"
+                password:
+                  type: string
+                  example: "password"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIifQ.1J4Q"
+  /store:
+    get:
+      summary: Get all public stores
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/store_list'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+      security:
+        - bearerAuth: []
+    put:
+      summary: Create a new store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/new_store'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/store'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 403
+                  error:
+                    type: string
+                    example: "Invalid request"
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+      security:
+        - bearerAuth: []
+  /store/{store_id}:
+    get:
+      summary: Get a store by ID
+      parameters:
+        - name: store_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the store to get
+        - $ref: '#/components/parameters/offset_param'
+        - $ref: '#/components/parameters/limit_param'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/store_content'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 404
+                  error:
+                    type: string
+                    example: "Store not found"
+components:
+  parameters:
+    offset_param:
+      name: offset
+      in: query
+      description: Number of items to skip
+      required: false
+      schema:
+        type: integer
+        example: 0
+    limit_param:
+      name: limit
+      in: query
+      description: Number of items to return
+      required: false
+      schema:
+        type: integer
+        example: 10
+        minimum: 1
+        maximum: 100
+  responses:
+    unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 401
+              error:
+                type: string
+                example: "Unauthorized"
+    forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 403
+              error:
+                type: string
+                example: "Forbidden"
+  schemas:
+    platform_type:
+      type: string
+      enum: [generic, steam, epic, uplay, origin, gog, psn, xbox, nintendo, battlenet, rockstar, twitch, discord, google, apple]
+    store_list:
+      type: object
+      properties:
+        stores:
+          type: array
+          items:
+            $ref: '#/components/schemas/store'
+    new_store:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Store 1"
+        description:
+          type: string
+          example: "This is store 1"
+        public:
+          type: boolean
+          example: true
+    store:
+      type: object
+      properties:
+        code:
+          type: integer 
+          example: 0
+        id:
+          type: string
+          example: "1"
+        name:
+          type: string
+          example: "Store 1"
+        description:
+          type: string
+          example: "This is store 1"
+        public:
+          type: boolean
+          example: true
+        platform:
+          $ref: '#/components/schemas/platform_type'
+        size:
+          type: integer
+          example: 100
+        scope:
+          type: string
+          enum: [player, character]
+        release_date:
+          type: string
+          format: date-time
+        last_update:
+          type: string
+          format: date-time
+    store_content:
+      type: object
+      properties:
+        store:
+          $ref: '#/components/schemas/store'
+        page:
+          type: integer
+          example: 1
+        total:
+          type: integer
+          example: 1
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/store_item'
+    store_item:
+      type: object
+      properties:
+        sku:
+          type: string
+          description: Unique identifier for the item
+          example: "item-sku-code"
+        name:
+          type: string
+          description: Item name (default localization)
+          example: "Item Name"
+        description:
+          type: string
+          description: Description of an item (default localization)
+          example: "This is game 1"
+        size:
+          type: integer
+          example: 10
+        release_date:
+          type: string
+          format: date-time
+        last_update:
+          type: string
+          format: date-time
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
