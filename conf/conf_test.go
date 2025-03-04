@@ -44,10 +44,10 @@ func TestExtractDirectoryAndFilenameFromPath(t *testing.T) {
 func TestConfig_Init(t *testing.T) {
 	log.SetLevel(log.TraceLevel)
 	type fields struct {
-		configDirectory string
+		ConfigDirectory string
 	}
 	type args struct {
-		configDirectory string
+		ConfigDirectory string
 	}
 	tests := []struct {
 		name    string
@@ -61,9 +61,9 @@ func TestConfig_Init(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Config{
-				configDirectory: tt.fields.configDirectory,
+				ConfigDirectory: tt.fields.ConfigDirectory,
 			}
-			if err := c.Init(tt.args.configDirectory); (err != nil) != tt.wantErr {
+			if err := c.Init(tt.args.ConfigDirectory); (err != nil) != tt.wantErr {
 				t.Errorf("Config.Init() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -88,7 +88,7 @@ func TestConfig_ReadConfig(t *testing.T) {
 	}
 
 	type fields struct {
-		configDirectory string
+		ConfigDirectory string
 	}
 	type args struct {
 		fsys     fs.FS
@@ -112,7 +112,7 @@ func TestConfig_ReadConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Config{
-				configDirectory: tt.fields.configDirectory,
+				ConfigDirectory: tt.fields.ConfigDirectory,
 			}
 			if err := c.ReadConfig(tt.args.fsys, tt.args.filename, tt.args.conf); (err != nil) != tt.wantErr {
 				t.Errorf("Config.ReadConfig() error = %v, wantErr %v", err, tt.wantErr)

@@ -56,17 +56,8 @@ func Serve(c *cli.Context) error {
 	if err := SetLogLevel(LogLevel); err != nil {
 		log.Errorf("Failed to set log level to %s: %s. Using INFO", LogLevel, err)
 	}
+
 	log.Infof("Starting REST service")
-	service := new(REST)
-	if err := service.Init(conf); err != nil {
-		log.Errorf("Failed to init REST service: %s", err.Error())
-		return err
-	}
-
-	return service.Start()
-}
-
-func ReadConfig() error {
 	dir, file, err := conf.ExtractDirectoryAndFilenameFromPath(ConfigFilepath)
 	if err != nil {
 		log.Error("Bad configuration file: %s", err.Error())
@@ -78,7 +69,21 @@ func ReadConfig() error {
 		log.Errorf("Unrecoverable error: %s", err.Error())
 		return err
 	}
-	return nil
+
+	restConfig := new(Config)
+	fs := os.DirFS(dir)
+	if err := config.ReadConfig(fs, file, restConfig); err != nil {
+		log.Errorf("Failed to read REST configuration: %s", err.Error())
+		return err
+	}
+
+	service := new(REST)
+	if err := service.Init(restConfig); err != nil {
+		log.Errorf("Failed to init REST service: %s", err.Error())
+		return err
+	}
+
+	return service.Start()
 }
 
 func SetLogLevel(level string) error {

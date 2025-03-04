@@ -20,7 +20,7 @@ func ExtractDirectoryAndFilenameFromPath(path string) (string, string, error) {
 }
 
 type Config struct {
-	configDirectory string
+	ConfigDirectory string
 }
 
 // Init initializes the Config struct
@@ -31,7 +31,7 @@ func (c *Config) Init(configDirectory string) error {
 		return fmt.Errorf("config directory is empty")
 	}
 
-	c.configDirectory = configDirectory
+	c.ConfigDirectory = configDirectory
 
 	return nil
 }
@@ -43,7 +43,7 @@ func (c *Config) ReadConfig(fsys fs.FS, filename string, conf interface{}) error
 	log.Debugf("necconf::ReadConfig: fsys: %+v", fsys)
 	log.Debugf("necconf::ReadConfig: filename: %s", filename)
 
-	if c.configDirectory == "" {
+	if c.ConfigDirectory == "" {
 		return fmt.Errorf("config directory is empty: not initialized")
 	}
 
