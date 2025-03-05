@@ -1,0 +1,26 @@
+apiVersion: skaffold/v4beta12
+kind: Config
+metadata:
+  name: sdev
+build:
+  artifacts:
+    - image: necrest
+      context: ../rest
+      docker:
+        dockerfile: Dockerfile
+    - image: necuser
+      context: ../user
+      docker:
+        dockerfile: Dockerfile
+    - image: necapp
+      context: /Users/crioto/Documents/savageking-io/nec-manager-app
+      docker:
+        dockerfile: Dockerfile
+manifests:
+  rawYaml:
+    - ../k8s/necuser.yaml
+    - ../k8s/necrest.yaml
+    - ../k8s/necapp.yaml
+    - ../k8s/nginx.yaml
+deploy:
+  kubectl: {}

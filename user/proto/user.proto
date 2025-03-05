@@ -1,0 +1,24 @@
+syntax = "proto3";
+package proto;
+option go_package = "../pb";
+
+service User {
+  rpc AuthenticateCredentials(CredentialsAuthRequest) returns (AuthResponse);
+  rpc AuthenticatePlatform(PlatformAuthRequest) returns (AuthResponse);
+}
+
+message CredentialsAuthRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message PlatformAuthRequest {
+  string token = 1;
+  string platform = 2;
+}
+
+message AuthResponse {
+  int32 code = 1;
+  string token = 2;
+  string error = 3;
+}

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: necuser
+  namespace: sdev
+  labels:
+    app: necuser
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: necuser
+  template:
+    metadata:
+      labels:
+        app: necuser
+    spec:
+      containers:
+        - name: necuser
+          image: necuser:latest
+          ports:
+            - containerPort: 50051
+          env:
+            - name: ENV
+              value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: necuser-service
+  namespace: sdev
+  labels:
+    app: necuser
+spec:
+  selector:
+    app: necuser
+  ports:
+    - protocol: TCP
+      port: 50051
+      targetPort: 50051
+  type: ClusterIP

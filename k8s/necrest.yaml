@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: necrest
+  namespace: sdev
+  labels:
+    app: necrest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: necrest
+  template:
+    metadata:
+      labels:
+        app: necrest
+    spec:
+      containers:
+        - name: necrest
+          image: necrest:latest
+          ports:
+            - containerPort: 12120
+          env:
+            - name: ENV
+              value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: necrest-service
+  namespace: sdev
+  labels:
+    app: necrest
+spec:
+  selector:
+    app: necrest
+  ports:
+    - protocol: TCP
+      port: 12120
+      targetPort: 12120
+  type: ClusterIP
